@@ -43,5 +43,3 @@ def detect_language(filename: str) -> str:
     }
     return mapping.get(ext, "Unknown")
 
-
-print("test change")
