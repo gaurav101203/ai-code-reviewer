@@ -8,7 +8,7 @@ def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     """Fetch the list of changed files and their diffs from a pull request."""
     g = Github(os.environ["GITHUB_TOKEN"])
     repo = g.get_repo(repo_name)
-    # pr = repo.get_pull(pr_number)
+    pr = repo.get_pull(pr_number)
 
     files_to_review = []
 
