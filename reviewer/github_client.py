@@ -10,7 +10,7 @@ def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     repo = g.get_repo(repo_name)
     # pr = repo.get_pull(pr_number)
 
-    # files_to_review = []
+    files_to_review = []
 
     for file in pr.get_files():
         if not file.patch:
