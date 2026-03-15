@@ -1,0 +1,5 @@
+anthropic>=0.25.0
+PyGithub>=2.1.1
+pylint>=3.0.0
+bandit>=1.7.5
+python-dotenv>=1.0.0
