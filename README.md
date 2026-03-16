@@ -11,6 +11,10 @@ It flags bugs, security issues, and style problems — posting inline comments j
 - 📊 **Summary comment** — severity breakdown table on every PR
 - 🌐 **Multi-language** — Python, JavaScript, TypeScript, JSX, TSX
 
+## Demo
+<img width="1567" height="838" alt="Screenshot 2026-03-16 194300" src="https://github.com/user-attachments/assets/2887ea5d-4267-4d58-b3c7-86c4eee26146" />
+
+
 ## Setup
 
 ### 1. Add your API key to GitHub Secrets
