@@ -50,7 +50,7 @@ def review_file(filename: str, patch: str, language: str) -> list[dict]:
 
     try:
         response = client.models.generate_content(
-            model="models/gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=full_prompt,
         )
         raw = response.text.strip()
