@@ -1,8 +1,9 @@
-import anthropic
+import google.generativeai as genai
 import json
 import os
 
-client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 SYSTEM_PROMPT = """You are a senior software engineer performing a thorough code review.
 
@@ -41,21 +42,16 @@ Example output:
 
 
 def review_file(filename: str, patch: str, language: str) -> list[dict]:
-    """Send a file diff to Claude and get back a list of structured review comments."""
-    user_message = (
+    """Send a file diff to Gemini and get back a list of structured review comments."""
+    full_prompt = (
+        f"{SYSTEM_PROMPT}\n\n"
         f"Please review this {language} diff for `{filename}`:\n\n"
         f"```diff\n{patch}\n```"
     )
 
     try:
-        message = client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=2000,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_message}],
-        )
-
-        raw = message.content[0].text.strip()
+        response = model.generate_content(full_prompt)
+        raw = response.text.strip()
 
         # Strip markdown fences if the model wrapped the JSON anyway
         if raw.startswith("```"):
@@ -78,7 +74,7 @@ def review_file(filename: str, patch: str, language: str) -> list[dict]:
 
     except json.JSONDecodeError as e:
         print(f"  JSON parse error for {filename}: {e}")
-        print(f"  Raw response: {message.content[0].text[:300]}")
+        print(f"  Raw response: {raw[:300]}")
         return []
     except Exception as e:
         print(f"  Unexpected error reviewing {filename}: {e}")
