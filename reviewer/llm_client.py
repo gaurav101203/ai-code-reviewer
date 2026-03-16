@@ -1,9 +1,8 @@
-import google.generativeai as genai
+from google import genai
 import json
 import os
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 SYSTEM_PROMPT = """You are a senior software engineer performing a thorough code review.
 
@@ -50,7 +49,10 @@ def review_file(filename: str, patch: str, language: str) -> list[dict]:
     )
 
     try:
-        response = model.generate_content(full_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=full_prompt,
+        )
         raw = response.text.strip()
 
         # Strip markdown fences if the model wrapped the JSON anyway
