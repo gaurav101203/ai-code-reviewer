@@ -1,1 +1,1 @@
-password = "Qwerty258963hjhgk456465hghfh"
+API_KEY = "Qwerty258963hjhgk456465hghfh"
