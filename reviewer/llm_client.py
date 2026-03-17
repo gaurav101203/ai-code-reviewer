@@ -23,7 +23,11 @@ Rules:
 - Be precise. If a line has no real issue, do not comment on it.
 - For security issues, always set severity to "error".
 - Return ONLY valid JSON array. No markdown fences, no explanation, no preamble.
-- If there are no issues at all, return an empty array: []"""
+- If there are no issues at all, return an empty array: []
+- Do NOT suggest suggestions unless they are genuinely impactful
+- Only comment on a maximum of 5 issues per file
+- Ignore minor style preferences — focus on real bugs, security, and performance
+- Do NOT comment on missing docstrings or minor naming issues"""
 
 
 def _call_llm(prompt: str) -> list[dict]:

@@ -3,6 +3,11 @@ import os
 
 SUPPORTED_EXTENSIONS = ('.py', '.js', '.ts', '.jsx', '.tsx')
 
+EXCLUDED_PATHS = [
+    "rules/",
+    "reviewer/",
+    "prompts/",
+]
 
 def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     """Fetch the list of changed files and their diffs from a pull request."""
@@ -13,6 +18,8 @@ def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     files_to_review = []
 
     for file in pr.get_files():
+        if any(file.filename.startswith(path) for path in EXCLUDED_PATHS):
+            continue
         if not file.patch:
             # Binary files or files with no diff (e.g. renamed with no changes)
             continue
@@ -42,4 +49,3 @@ def detect_language(filename: str) -> str:
         "tsx": "React TSX",
     }
     return mapping.get(ext, "Unknown")
-
