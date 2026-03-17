@@ -3,9 +3,18 @@ import os
 
 SUPPORTED_EXTENSIONS = ('.py', '.js', '.ts', '.jsx', '.tsx')
 
+EXCLUDED_PATHS = [
+    "rules/",
+    "reviewer/",
+    "prompts/",
+]
 
 def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     """Fetch the list of changed files and their diffs from a pull request."""
+    for file in pr.get_files():
+        # Skip the bot's own files
+        if any(file.filename.startswith(path) for path in EXCLUDED_PATHS):
+            continue
     g = Github(os.environ["GITHUB_TOKEN"])
     repo = g.get_repo(repo_name)
     pr = repo.get_pull(pr_number)
