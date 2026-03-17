@@ -23,36 +23,16 @@ Rules:
 - Be precise. If a line has no real issue, do not comment on it.
 - For security issues, always set severity to "error".
 - Return ONLY valid JSON array. No markdown fences, no explanation, no preamble.
-- If there are no issues at all, return an empty array: []
-
-Example output:
-[
-  {
-    "line": 12,
-    "severity": "error",
-    "category": "security",
-    "comment": "Hardcoded credentials are a critical security risk. Anyone with access to this file can steal these credentials.",
-    "suggestion": "password = os.environ['DB_PASSWORD']"
-  },
-  {
-    "line": 27,
-    "severity": "warning",
-    "category": "bug",
-    "comment": "This will throw a KeyError if 'user' is not in the dict. Use .get() instead.",
-    "suggestion": "user = data.get('user', {})"
-  }
-]"""
+- If there are no issues at all, return an empty array: []"""
 
 
 def _call_llm(prompt: str) -> list[dict]:
-    """Make a single LLM call and return parsed comments. Raises on failure."""
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )
     raw = response.text.strip()
 
-    # Strip markdown fences if the model wrapped the JSON anyway
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
@@ -61,7 +41,6 @@ def _call_llm(prompt: str) -> list[dict]:
 
     comments = json.loads(raw)
 
-    # Validate shape — drop malformed entries
     valid = []
     for c in comments:
         if all(k in c for k in ("line", "severity", "category", "comment")):
@@ -73,10 +52,6 @@ def _call_llm(prompt: str) -> list[dict]:
 
 
 def review_file(filename: str, patch: str, language: str) -> list[dict]:
-    """
-    Send a file diff to Gemini and get back structured review comments.
-    Large diffs are automatically split into chunks to avoid context limits.
-    """
     chunks = split_patch_into_chunks(patch)
 
     if len(chunks) > 1:
@@ -94,13 +69,9 @@ def review_file(filename: str, patch: str, language: str) -> list[dict]:
 
         try:
             comments = _call_llm(prompt)
-
-            # Adjust line numbers if this is not the first chunk
             if chunk_index > 0:
                 comments = adjust_line_numbers(comments, chunk_index, 100)
-
             all_comments.extend(comments)
-
         except json.JSONDecodeError as e:
             print(f"  JSON parse error in chunk {chunk_index + 1} of {filename}: {e}")
         except Exception as e:
