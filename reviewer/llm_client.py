@@ -1,6 +1,10 @@
 from google import genai
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from chunk_processor import split_patch_into_chunks, adjust_line_numbers
 
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
@@ -40,44 +44,66 @@ Example output:
 ]"""
 
 
-def review_file(filename: str, patch: str, language: str) -> list[dict]:
-    """Send a file diff to Gemini and get back a list of structured review comments."""
-    full_prompt = (
-        f"{SYSTEM_PROMPT}\n\n"
-        f"Please review this {language} diff for `{filename}`:\n\n"
-        f"```diff\n{patch}\n```"
+def _call_llm(prompt: str) -> list[dict]:
+    """Make a single LLM call and return parsed comments. Raises on failure."""
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
     )
+    raw = response.text.strip()
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=full_prompt,
+    # Strip markdown fences if the model wrapped the JSON anyway
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    comments = json.loads(raw)
+
+    # Validate shape — drop malformed entries
+    valid = []
+    for c in comments:
+        if all(k in c for k in ("line", "severity", "category", "comment")):
+            valid.append(c)
+        else:
+            print(f"  Skipping malformed comment: {c}")
+
+    return valid
+
+
+def review_file(filename: str, patch: str, language: str) -> list[dict]:
+    """
+    Send a file diff to Gemini and get back structured review comments.
+    Large diffs are automatically split into chunks to avoid context limits.
+    """
+    chunks = split_patch_into_chunks(patch)
+
+    if len(chunks) > 1:
+        print(f"  Large diff — split into {len(chunks)} chunks")
+
+    all_comments = []
+
+    for chunk_index, chunk in enumerate(chunks):
+        prompt = (
+            f"{SYSTEM_PROMPT}\n\n"
+            f"Please review this {language} diff for `{filename}`"
+            + (f" (chunk {chunk_index + 1}/{len(chunks)})" if len(chunks) > 1 else "")
+            + f":\n\n```diff\n{chunk}\n```"
         )
-        raw = response.text.strip()
 
-        # Strip markdown fences if the model wrapped the JSON anyway
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-            raw = raw.strip()
+        try:
+            comments = _call_llm(prompt)
 
-        comments = json.loads(raw)
+            # Adjust line numbers if this is not the first chunk
+            if chunk_index > 0:
+                comments = adjust_line_numbers(comments, chunk_index, 100)
 
-        # Validate the shape — drop malformed entries
-        valid = []
-        for c in comments:
-            if all(k in c for k in ("line", "severity", "category", "comment")):
-                valid.append(c)
-            else:
-                print(f"  Skipping malformed comment: {c}")
+            all_comments.extend(comments)
 
-        return valid
+        except json.JSONDecodeError as e:
+            print(f"  JSON parse error in chunk {chunk_index + 1} of {filename}: {e}")
+        except Exception as e:
+            print(f"  Unexpected error in chunk {chunk_index + 1} of {filename}: {e}")
 
-    except json.JSONDecodeError as e:
-        print(f"  JSON parse error for {filename}: {e}")
-        print(f"  Raw response: {raw[:300]}")
-        return []
-    except Exception as e:
-        print(f"  Unexpected error reviewing {filename}: {e}")
-        return []
+    return all_comments
