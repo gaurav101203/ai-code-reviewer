@@ -82,14 +82,10 @@ def review_file(filename: str, patch: str, language: str) -> list[dict]:
     if len(chunks) > 1:
         print(f"  Large diff — split into {len(chunks)} chunks")
 
-    all_comments = []
-
-    for chunk_index, chunk in enumerate(chunks):
-        prompt = (
-            f"{SYSTEM_PROMPT}\n\n"
-            f"Please review this {language} diff for `{filename}`"
-            + (f" (chunk {chunk_index + 1}/{len(chunks)})" if len(chunks) > 1 else "")
-            + f":\n\n```diff\n{chunk}\n```"
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=full_prompt,
         )
 
         try:
