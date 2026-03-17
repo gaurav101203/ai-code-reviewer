@@ -15,6 +15,7 @@ It helps developers catch bugs, performance issues, and bad patterns before merg
 
 ## Demo
 <img width="1567" height="838" alt="Screenshot 2026-03-16 194300" src="https://github.com/user-attachments/assets/2887ea5d-4267-4d58-b3c7-86c4eee26146" />
+<img width="1225" height="843" alt="image" src="https://github.com/user-attachments/assets/ae016e4e-e47f-49e9-bec0-ec3b71ef9dd2" />
 
 
 ## Setup
