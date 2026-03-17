@@ -19,6 +19,8 @@ Each comment MUST have exactly these fields:
 - "suggestion": an optional improved code snippet (string). Omit this key if you have no fix to offer.
 
 Rules:
+- ALWAYS flag hardcoded passwords, credentials, secrets, or sensitive data — this is your #1 priority and overrides all other limits
+- The 5 issue limit does NOT apply to security findings
 - Only comment on lines that were ADDED (lines starting with +). Do not comment on removed lines (-).
 - Be precise. If a line has no real issue, do not comment on it.
 - For security issues, always set severity to "error".

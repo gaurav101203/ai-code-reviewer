@@ -24,7 +24,11 @@ def merge_comments(rule_comments: list[dict], llm_comments: list[dict]) -> list[
     Rules take priority — if a rule already flagged a line, skip the LLM comment for that line
     to avoid duplicate feedback on the same issue.
     """
-    rule_lines = {c["line"] for c in rule_comments}
+    # Only block LLM comments if a SECURITY or ERROR rule already caught that line
+    rule_lines = {
+        c["line"] for c in rule_comments
+        if c["severity"] == "error" or c["category"] == "security"
+    }
     filtered_llm = [c for c in llm_comments if c["line"] not in rule_lines]
     return rule_comments + filtered_llm
 
