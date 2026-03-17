@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from chunk_processor import split_patch_into_chunks, adjust_line_numbers
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+client = genai.Clients(api_key=os.environ["GEMINI_API_KEY"])
 
 SYSTEM_PROMPT = """You are a senior software engineer performing a thorough code review.
 
