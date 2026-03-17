@@ -11,10 +11,6 @@ EXCLUDED_PATHS = [
 
 def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     """Fetch the list of changed files and their diffs from a pull request."""
-    for file in pr.get_files():
-        # Skip the bot's own files
-        if any(file.filename.startswith(path) for path in EXCLUDED_PATHS):
-            continue
     g = Github(os.environ["GITHUB_TOKEN"])
     repo = g.get_repo(repo_name)
     pr = repo.get_pull(pr_number)
@@ -22,6 +18,8 @@ def get_pr_diff(repo_name: str, pr_number: int) -> list[dict]:
     files_to_review = []
 
     for file in pr.get_files():
+        if any(file.filename.startswith(path) for path in EXCLUDED_PATHS):
+            continue
         if not file.patch:
             # Binary files or files with no diff (e.g. renamed with no changes)
             continue
