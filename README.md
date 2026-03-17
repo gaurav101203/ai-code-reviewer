@@ -1,7 +1,9 @@
 # 🤖 AI Code Reviewer
 
-A GitHub Action that automatically reviews every pull request using Claude AI.
-It flags bugs, security issues, and style problems — posting inline comments just like a human reviewer would.
+AI Code Reviewer is an automated GitHub PR review agent that analyzes pull request diffs
+and generates actionable feedback using LLMs.
+
+It helps developers catch bugs, performance issues, and bad patterns before merging code.
 
 ## Features
 
@@ -38,7 +40,6 @@ The bot will trigger on every new PR or pushed commit.
 pip install -r requirements.txt
 
 # Copy and fill in your credentials
-cp .env.example .env
 # Edit .env with your keys
 
 # Run against a real PR
