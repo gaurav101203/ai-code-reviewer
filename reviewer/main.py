@@ -8,9 +8,25 @@ try:
 except ImportError:
     pass
 
+# Allow imports from both reviewer/ and rules/
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from github_client import get_pr_diff
 from llm_client import review_file
 from comment_poster import post_review_comments, post_summary_comment
+from rules import run_all_rules
+
+
+def merge_comments(rule_comments: list[dict], llm_comments: list[dict]) -> list[dict]:
+    """
+    Merge rule-based findings with LLM findings.
+    Rules take priority — if a rule already flagged a line, skip the LLM comment for that line
+    to avoid duplicate feedback on the same issue.
+    """
+    rule_lines = {c["line"] for c in rule_comments}
+    filtered_llm = [c for c in llm_comments if c["line"] not in rule_lines]
+    return rule_comments + filtered_llm
 
 
 def main():
@@ -50,14 +66,27 @@ def main():
         language = file["language"]
         print(f"🔍 Reviewing {filename} ({language})...")
 
-        comments = review_file(filename, file["patch"], language)
+        # Step 1: fast static rule checks (no API call needed)
+        print(f"   Running rule checks...")
+        rule_comments = run_all_rules(filename, file["patch"])
+        if rule_comments:
+            print(f"   Rules found {len(rule_comments)} issue(s)")
+
+        # Step 2: LLM review (catches logic bugs, complex issues rules can't see)
+        print(f"   Running AI review...")
+        llm_comments = review_file(filename, file["patch"], language)
+        if llm_comments:
+            print(f"   AI found {len(llm_comments)} issue(s)")
+
+        # Step 3: merge, rules take priority on same lines
+        comments = merge_comments(rule_comments, llm_comments)
         all_comments[filename] = comments
 
         if not comments:
             print(f"   ✅ No issues found")
             continue
 
-        print(f"   Found {len(comments)} comment(s) — posting...")
+        print(f"   Posting {len(comments)} comment(s)...")
         posted = post_review_comments(repo, pr_num, filename, comments)
         print(f"   ✅ Posted {posted} inline comment(s)")
 
